@@ -4,16 +4,17 @@
 {% block title %}Usage by Publisher - {{ super() }}{% endblock %}
 
 
-{% block optional_head %}
+{% block head_extras %}
+    {{ super() }}
     <link rel="stylesheet" type="text/css" href="/scripts/vendor/rickshaw.min.css"/>
     <link rel="stylesheet" type="text/css" href="/css/ga_report.css?1"/>
     <script type="text/javascript" src="/scripts/modernizr-2.6.2.custom.js"></script>
-    <script type="text/javascript" src="/scripts/ckanext_ga_reports.js?1"></script>
-    <script type="text/javascript" src="/scripts/vendor/jquery.sparkline.modified.js"></script>
     <script type="text/javascript" src="/scripts/rickshaw_ie7_shim.js"></script>
     <script type="text/javascript" src="/scripts/vendor/d3.v2.js"></script>
     <script type="text/javascript" src="/scripts/vendor/d3.layout.min.js"></script>
     <script type="text/javascript" src="/scripts/vendor/rickshaw.min.js"></script>
+    <script type="text/javascript" src="/scripts/vendor/jquery.sparkline.modified.js"></script>
+    <script type="text/javascript" src="/scripts/ckanext_ga_reports.js?1"></script>
 {% endblock %}
 
 {% block breadcrumb_content %}
@@ -21,21 +22,27 @@
     <li><a href="/data/site-usage/publisher">Publishers</a></li>
 {% endblock %}
 
+{% block secondary_content %}
+  <div class="col-md-4">
+    <div class="whitebox">
+      <strong>Graph Legend</strong>
+      <div id="graph-legend-container">
+        <div style="display: none;" id="legend_none">(No graph is loaded)</div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
 {% block primary_content_inner %}
+  <script type="text/javascript">
+    var data_for_reports = {};
+  </script>
   <div>
     {% set download_link=h.url_for(controller='ckanext.ga_report.controller:GaDatasetReport',action='publisher_csv',month=c.month or 'all') %}
     <a class="btn button btn-primary btn-sm pull-right" href="{{download_link}}"><i class="icon-download"></i>&nbsp; Download as CSV</a>
     <h1>{{g.site_title.capitalize()}} Usage</h1>
 
     <div class="row" style="background: #fff;">
-      <div class="col-md-4">
-        <div class="whitebox">
-          <strong>Graph Legend</strong>
-          <div id="graph-legend-container">
-            <div style="display: none;" id="legend_none">(No graph is loaded)</div>
-          </div>
-        </div>
-      </div>
       <div class="col-md-8">
         <div class="whitebox">
           <strong>Publishers</strong>
@@ -69,10 +76,18 @@
   </div><!--/content-->
 
     <script type="text/javascript">
-      window.onload = function() {
+        function defer_method(method) {
+            if (method) {
+                method();
+            } else {
+                setTimeout(function() { defer_method(method) }, 50);
+            }
+        }
         $(function() {
-          CKAN.GA_Reports.bind_month_selector();
+          for(i in data_for_reports) {
+            defer_method(CKAN.GA_Reports.render_rickshaw.apply(this, data_for_reports[i]));
+          }
+          defer_method(CKAN.GA_Reports.bind_month_selector);
         });
-      }
     </script>
 {% endblock %}
